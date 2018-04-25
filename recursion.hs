@@ -40,3 +40,12 @@ elem a [] = False
 elem a (x:xs)
 	| a == x = True
 	| otherwise = elem a xs
+
+--quick sort is generally extremely elegant in haskell ,which is why everyone uses it
+
+quicksort: (Ord a) => [a] -> [a]
+quicksort [] = []
+quicksort (x:xs) =
+	let smallerSorted = quicksort [a | a <- xs, a<=x]
+		biggerSorted = quicksort [a | a<- xs, a> x]
+	let smallerSorted ++ [x] ++ biggerSorted
