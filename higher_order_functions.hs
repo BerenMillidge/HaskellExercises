@@ -43,11 +43,11 @@ largestDivisible f num divider = head (filter p [num, num-1..])
 takeWhile:: (a-> Bool) -> a -> a
 takeWhile pred (x:xs)
 	| p x = x: takeWhile p xs
-	|otherwise
+	| otherwise x
 
 
 --time to have some fun with collatz sequences
-collatzChain:: (Integral a) => a -> [a]
+collatzChain :: (Integral a) => a -> [a]
 collatzChain 1 = [1]
 collatzChain n
 	| even n = n:chain (n `div` 2)
@@ -56,3 +56,44 @@ collatzChain n
 numLongChains :: Int
 numLongChains 0 = 0
 numLongChains = length (filter (\xs -> length xs > 15) (map chain[1.100]))
+
+--okay, starting with folds now
+-- a fold takes a binary function, a starting value, and a list, binary function takes two parameters
+-- binary function caled with the accumulator and next element to produce a new accumulator and so forth
+-- i.e. simplest case is summing a list
+-- foldl folds from the left side, foldr from the right
+
+foldSum :: (Num a) => [a] -> a
+foldSum xs = foldl (\acc x -> acc + x) 0 xs
+
+-- it's obvious how it works and how it returns
+-- folds return the accumulator as their return type
+elemFold :: (Eq a) => a -> [a] -> Bool
+elemFold y ys = foldl (\acc x -> if x==y then True else acc) False ys
+
+--map can be implemented with folds
+
+foldMap :: (a->b) -> [a] -> [b]
+foldMap f xs = foldr (\x acc -> f x : acc) [] xs
+
+-- could have done foldmap left - i.e. foldl (\acc x -> acc ++ [f x]) [] xs - but apparently ++ is more 
+-- cmoputationall expensive than : so use a right fold when building up a list from new list
+-- another difference is right folds work on infinite lists while left ones dont!
+
+maximum' :: (Ord a) => [a] -> a  
+maximum' = foldr1 (\x acc -> if x > acc then x else acc)  
+      
+reverse' :: [a] -> [a]  
+reverse' = foldl (\acc x -> x : acc) []  
+      
+product' :: (Num a) => [a] -> a  
+product' = foldr1 (*)  
+      
+filter' :: (a -> Bool) -> [a] -> [a]  
+filter' p = foldr (\x acc -> if p x then x : acc else acc) []  
+      
+head' :: [a] -> a  
+head' = foldr1 (\x _ -> x)  
+      
+last' :: [a] -> a  
+last' = foldl1 (\_ x -> x)  
