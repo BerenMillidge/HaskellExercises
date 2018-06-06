@@ -97,3 +97,16 @@ head' = foldr1 (\x _ -> x)
       
 last' :: [a] -> a  
 last' = foldl1 (\_ x -> x)  
+
+-- next thing to learn is the function aplication function $
+--basically is function application with really low precedence to stop writing parentheses
+
+($)' :: (a->b) -> a -> b
+f $ x = f x
+
+--then there's also the function compositio nfunction .
+(.) :: (b-> c) -> (a -> b) -> a -> c
+f . g = \x -> f (g x)
+--i.e. it takes two functions and returns a function that is the result of those two functions!
+-- i.e..
+map $ negage . abs [-3, -1 ...]
