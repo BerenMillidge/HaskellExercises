@@ -74,3 +74,128 @@ type String = [Char]
 --can also use multiple different parametrised types - i.e. 
 data Either a b = Left a | Right b deriving (Eq, Ord, Read, Show)
 -- for instance left can be an error message, and right can be the otherwise normally returned result of the computation!
+
+
+-- okay, now it's time to recursive data structures.. let's see how it's going!
+-- lists can be defined recursively
+data List a = Empty | Cons a (List a) deriving (Show, Read, Eq, Ord)
+
+-- first let's implement a binary search tree!
+data Tree a = EmptyTree | Node a (Tree a) (Tree a) deriving (Show, Read, Eq)
+
+--creation function
+
+singleton :: a -> Tree a
+singleton x = Node x EmptyTree EmptyTree
+
+treeInsert :: (Ord a) => a -> Tree a -> Tree a
+treeInsert x EmptyTree = singleton x -- pattern match to create a new tree if nothing already existing!
+treeInsert x (Node a left right)
+	| x == a = Node x left right
+	| x < a = Node a (treeInsert x left) right
+	| x > a = Node a left (treeInsert x right)
+
+treeElem :: (Ord a) => a -> Tree a -> Bool
+treeElem x EmptyTree = False
+treeElem x (Node a left right)
+	| x ==a = True
+	| x < a = treeElem x left
+	| x > a = treeElem x right
+
+-- so yeah, algebraic and recursive datastructures are powerful. Similarly, you can make your own typeclasses
+-- to be whatever you want, so let's do this!
+
+--typeclasses define the kind of behaviour a type is expected (required) to have. for instance Eq
+-- typeclass - all types implementing Eq have to be able to have equals and non equals functions
+--i.e.:
+class Eq a where
+	(==) :: a -> a -> Bool
+	(/=) :: a -> a -> Bool
+	x == y = not (x \=y)
+	x \= y = not (x ==y)
+
+--the functions are defned in terms of mutual recursion which is fundortunate - and presumably an infinite loop
+-- however, you can specifiy specific instances generally!
+
+data TrafficLight = Red | Yellow | Green
+
+instance Eq TrafficLight where
+	Red == Red = True
+	Green == Green = True
+	Yellow = Yellow = True
+	_ == _ = False
+
+-- and implement show also
+instance Show TrafficLight where
+	show Red = "Red Light"
+	show Yellow = "Yellow light"  
+    show Green = "Green light"
+
+ -- typeclasses can subclass other type classes - i.e.
+--Class (Eq a) => Num a where 
+	--...
+-- so what about creating javascript style boolean assumptions - i.e. yesno for all sorts of random things
+-- like "" = False, and "0" = False etc
+--define typeclass yesNo
+
+class YesNo a where
+	yesno :: a -> Bool
+
+instance YesNo Int where
+	yesno 0 = False
+	yesno _ = True
+
+instance YesNo [a] where
+	yesno [] = False
+	yesno _ = True
+
+instance YesNo Bool where
+	yesno = id
+
+instance YesNo (Maybe a) where
+	yesno (Just _) = True
+	yesno Nothing = False
+
+instance YesNo (Tree a) where
+	yesno EmptyTree = False
+	yesno _ =  True
+
+--now the true fun begins -- functors!
+-- the functor typeclass is basically for things that can be mapped over so, how is it implemented
+
+class Functor f where
+	fmap :: (a->b) -> f a -> f b
+-- crucially here f is confusingly NOT a function application, rather it is an algebraic type constructor 
+-- for instance like Maybe a - but it can be for ANY type constructor. It can be for functions
+-- but it doesn't have to be, which is why it's confusing here it's called f 
+-- but essentially - a functor is a typeclass which takes ANY concrete or constructed type
+-- and a function mappping that type to ANY other concrete or constructed type, and then performs the mapping
+-- to get any concrete or constructed result type... makes sense! if very abstract 
+
+	-- map is implemented simply
+instance Functor [] where
+	fmap = map
+
+-- but can implement a functor functionality for Maybe, for instance
+instance Functor Maybe where
+	fmap f (Just x) = Just (f x)
+	fmap f Nothing = Nothing
+
+instance Functor Tree where
+	fmap f EmptyTree = EmptyTree
+	fmap f (Node x leftsub rightsub) = Node (f x) (fmap f leftsub) (fmap f rightsub)
+
+-- this functor is then impleented completely recursively, which is really cool to see
+-- although it presumes the function f only has/needs access to local subbranch tree information!
+
+instance Functor (Either a) where
+	fmap f (Right x) = Right (f x)
+	fmap f (Left x) = Left x
+
+
+--types also have types, which are called 'kinds'. * is the kind/type of a concrete type
+-- other complex typeclasses and the like are functions of kinds - i.e. types of types
+-- so for instance Maybe is of kind *-> * as it takes a concrete type and returns another concrete type
+-- functors are (*->*)->*->*
+-- since they take a type constructor and a concrete type and return another concrete type
+-- so that's cool, and very abstract and makes a lot of sense!
