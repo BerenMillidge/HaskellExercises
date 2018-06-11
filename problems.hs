@@ -27,3 +27,38 @@ solveRPN expression = head (foldl foldingFunction [] (words expression))
 product :: (Num a) => [a] -> a
 product xs = foldl f 1 xs
 	where f acc (x:xs) = acc*x:xs
+
+-- okay, now for the more difficult graph search problem
+
+data Node = Node Road Road | EndNode Road
+data Road = Road Int Node
+
+-- alternatively - so yeah, think about your datatypes, what is the really crucial information to represent
+-- may not be completely isomorphic to the obviously apparent problem structure
+
+data Section = Section {getA :: Int, getB::Int, getC::Int} deriving (Show)
+type RoadSystem = [Section]
+
+data Label = A | B | C deriving (Show)
+type Path = [(Label, Int)]
+
+optimalPath :: RoadSystem -> Path
+
+
+-- so the individual step function now whichcalculates the optimal path in each section
+
+roadStep :: (Path, Path) -> Section -> (Path, Path)
+roadStep (pathA, pathB) (Section a b c) =
+	let priceA = sum $ map snd pathA
+		priceB = sum $ map snd pathB
+		forwardPriceToA = priceA + a
+		crossPriceToA = priceB + b + c
+		forwardPriceToB = priceB + b
+		crossPriceToB = priceA + a + c
+		newPathToA = if forwardPriceToA <= crossPriceToA
+			then (A, a): pathA
+			else (C,c):(B,b):pathB
+		newPathToB if forwardPriceToB <=crossPriceToB
+			then (B,b):pathB
+			else (C,c):(A,a):pathA
+		in (newPathToA, newPathToB)
