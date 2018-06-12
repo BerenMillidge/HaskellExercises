@@ -42,7 +42,15 @@ type RoadSystem = [Section]
 data Label = A | B | C deriving (Show)
 type Path = [(Label, Int)]
 
+--the main solving in this divide and conquer algoithm happens in the road step function
+-- here it just combines the solution
 optimalPath :: RoadSystem -> Path
+optimalPath roadSystem = 
+	let (betAPath, bestBPath) = foldl roadStep([],[]) roadSystem
+	in if sum (map snd bestApath) <= sum (map snd bestBPath)
+		then reverse bestApath
+		else reverse bestBPath
+
 
 
 -- so the individual step function now whichcalculates the optimal path in each section
@@ -62,3 +70,22 @@ roadStep (pathA, pathB) (Section a b c) =
 			then (B,b):pathB
 			else (C,c):(A,a):pathA
 		in (newPathToA, newPathToB)
+
+
+-- next step is converting this into a proper road system!
+
+groupsOf :: Int -> [a] -> [[a]]
+groupsOf 0 = undefined
+groupsOf _ [] = []
+groupsOf n xs = take n xs : groupsOf n (drop n xs)
+
+--and now take into a thing to make it make sense
+main = do
+	contents <- getContents
+	let threes = groupsOf 3 (map read $ lines contents)
+	roadSystem = map (\[a,b,c] -> Section a b c) threes
+	path = optimalPath roadSystem
+	pathString = concat $ map (show .fst) path
+	pathPrice = sum $ map snd path
+putStrLn $ "The best path to take is: " ++ pathString
+putStrLn $ "The price is: " ++ pathPrice
